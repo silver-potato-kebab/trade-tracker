@@ -1,5 +1,6 @@
 import csv
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog
 
 
@@ -25,7 +26,8 @@ class MainApp(tk.Tk):
         self.mid_frame.pack(padx=10, pady=(5, 5))
 
         self.column_labels = ["Date", "Long/Short", "Shares", "Price", "Net Cost", "Total Cost", "Cost Basis"]
-        self.create_columns()
+        self.tree = ttk.Treeview(self, show="headings")
+        self.tree.pack(padx=10, pady=10, fill="both", expand=True)
 
         # Bottom Container (Status label)
         self.bot_frame = tk.Frame(self)
@@ -47,7 +49,24 @@ class MainApp(tk.Tk):
 
     def display_csv_data(self, file_path):
         try:
-            self.status_label.config(text=f"CSV file loaded: {file_path}")
+            with open(file_path, "r", newline="") as file:
+                csv_reader = csv.reader(file)
+                header = next(csv_reader)
+                print(header)
+                self.tree.delete(*self.tree.get_children()) # Clear current data
+
+                self.tree["columns"] = header
+                for col in header:
+                    print(col)
+                    self.tree.heading(col, text=col)
+                    self.tree.column(col, stretch=tk.NO, width=100)
+
+                for row in csv_reader:
+                    self.tree.insert("", tk.END, values=row)
+
+                self.tree["show"] = "headings"
+                self.status_label.config(text=f"CSV file loaded: {file_path}")
+
         except Exception as e:
             self.status_label.config(text=f"Error: {e}")
 
