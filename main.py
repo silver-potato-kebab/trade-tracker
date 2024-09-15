@@ -2,6 +2,7 @@ import csv
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkcalendar import DateEntry
 
 
 class MainApp(tk.Tk):
@@ -21,9 +22,37 @@ class MainApp(tk.Tk):
         self.ticker_entry = tk.Entry(self.top_frame, width=8)
         self.ticker_entry.pack(side=tk.LEFT)
 
+        # Input Section
+        self.input_frame = tk.LabelFrame(self, text="Input")
+        self.input_frame.pack(padx=10, pady=5)
+
+        self.input_labels = ["Ticker", "Date", "Long/Short", "Shares", "Price", "Net Cost", "Total Cost", "Cost Basis"]
+        for col, label in enumerate(self.input_labels):
+            label = tk.Label(self.input_frame, text=label, padx=20, pady=10)
+            label.grid(row=0, column=col)
+
+        self.ticker_entry1 = tk.Entry(self.input_frame, width=10)
+        self.ticker_entry1.grid(row=1, column=0)
+
+        self.date_entry1 = DateEntry(self.input_frame, width=10)
+        self.date_entry1.grid(row=1, column=1)
+
+        self.pos_type1 = ttk.Combobox(self.input_frame, values=["Long", "Short"], width=10)
+        self.pos_type1.grid(row=1, column=2)
+
+        self.shares_entry1 = tk.Entry(self.input_frame, width=10)
+        self.shares_entry1.grid(row=1, column=3)
+
+        self.price_entry1 = tk.Entry(self.input_frame, width=10)
+        self.price_entry1.grid(row=1, column=4)
+
+        self.netcost_entry1 = tk.Entry(self.input_frame, width=10)
+        self.netcost_entry1.grid(row=1, column=5)
+
+
         # Middle Container (Trade log)
         self.mid_frame = tk.Frame(self)
-        self.mid_frame.pack(padx=10, pady=(5, 5))
+        self.mid_frame.pack(padx=10, pady=5)
 
         self.column_labels = ["Date", "Long/Short", "Shares", "Price", "Net Cost", "Total Cost", "Cost Basis"]
         self.tree = ttk.Treeview(self, show="headings")
