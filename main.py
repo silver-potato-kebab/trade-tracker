@@ -28,7 +28,7 @@ class MainApp(tk.Tk):
 
         self.input_labels = ["Ticker", "Date", "Long/Short", "Shares", "Price", "Net Cost", "Total Cost", "Cost Basis"]
         for col, label in enumerate(self.input_labels):
-            label = tk.Label(self.input_frame, text=label, padx=20, pady=10)
+            label = tk.Label(self.input_frame, text=label, padx=10, pady=10)
             label.grid(row=0, column=col)
 
         self.ticker_entry1 = tk.Entry(self.input_frame, width=10)
@@ -49,6 +49,14 @@ class MainApp(tk.Tk):
         self.netcost_entry1 = tk.Entry(self.input_frame, width=10)
         self.netcost_entry1.grid(row=1, column=5)
 
+        self.totalcost_entry = tk.Entry(self.input_frame, width=10)
+        self.totalcost_entry.grid(row=1, column=6)
+
+        self.costbasis_entry = tk.Entry(self.input_frame, width=10)
+        self.costbasis_entry.grid(row=1, column=7)
+
+        widgets = self.input_frame.winfo_children()
+        print(widgets[9].get())
 
         # Middle Container (Trade log)
         self.mid_frame = tk.Frame(self)
