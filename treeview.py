@@ -35,7 +35,47 @@ class TreeviewEdit(ttk.Treeview):
         else:
             selected_text = selected_values.get("values")[column_index]
 
-        print(selected_text)
+        column_box = self.bbox(item=selected_iid, column=column) # returns (x, y, w, h)
+
+        entry_edit = tk.Entry(root)
+
+        # Record the column index and item iid.
+        entry_edit.editing_column_index = column_index
+        entry_edit.editing_item_iid = selected_iid
+
+        entry_edit.insert(0, selected_text)
+        entry_edit.selection_range(0, tk.END)
+
+        entry_edit.focus()
+
+        entry_edit.bind("<FocusOut>", self.on_focus_out)
+        entry_edit.bind("<Return>", self.on_enter_pressed)
+
+        entry_edit.place(x=column_box[0],
+                         y=column_box[1],
+                         w=column_box[2],
+                         h=column_box[3])
+
+    def on_focus_out(self, event):
+        event.widget.destroy()
+
+    def on_enter_pressed(self, event):
+        new_text = event.widget.get()
+
+        # Such as I002
+        selected_iid = event.widget.editing_item_iid
+
+        # Such as -1 (tree column), 0 (first self-defined column), etc.
+        column_index = event.widget.editing_column_index
+
+        if column_index == -1:
+            self.item(selected_iid, text=new_text)
+        else:
+            current_values = self.item(selected_iid).get("values")
+            current_values[column_index] = new_text
+            self.item(selected_iid, values=current_values)
+
+        event.widget.destroy()
 
 
 
