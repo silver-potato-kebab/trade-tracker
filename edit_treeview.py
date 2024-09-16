@@ -45,7 +45,7 @@ class EditTreeview(ttk.Treeview):
         # Get the coordinate and dimension of tree or cell -> (x, y, w, h)
         column_box = self.bbox(item=selected_iid, column=column)
 
-        entry_edit = ttk.Entry(root)
+        entry_edit = ttk.Entry()
 
         # Keep track of column_index and selected_iid inside the ttk.Entry object for event reference.
         entry_edit.editing_column_index = column_index
@@ -58,8 +58,9 @@ class EditTreeview(ttk.Treeview):
         entry_edit.bind("<FocusOut>", self.on_focus_out)
         entry_edit.bind("<Return>", self.on_enter_pressed)
 
-        entry_edit.place(x=column_box[0],
-                         y=column_box[1],
+        # Offset any padding by factoring in the difference between the widget's and toplevel's (x, y) coordinates.
+        entry_edit.place(x=column_box[0]+(self.winfo_rootx()-self.winfo_toplevel().winfo_rootx()),
+                         y=column_box[1]+(self.winfo_rooty()-self.winfo_toplevel().winfo_rooty()),
                          w=column_box[2],
                          h=column_box[3])
 
