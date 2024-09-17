@@ -1,3 +1,6 @@
 open_date,ticker,long_short,open_shares,open_price,net_cost,close_date,close_shares,close_price,net_proceeds
+09/03/24,SQQQ,Long,88,8.64,760.32,09/03/24,88,8.71,766.48
 09/03/24,SQQQ,Long,88,8.57,754.16,09/03/24,88,8.71,766.48
 09/05/24,TQQQ,Long,13,63.33,823.29,09/05/24,13,62.89,817.57
+09/06/24,SQQQ,Long,10,9.53,95.3,,,,
+09/06/24,SQQQ,Long,50,9.45,472.5,09/06/24,60,9.65,579
