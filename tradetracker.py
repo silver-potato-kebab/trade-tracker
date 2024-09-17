@@ -86,7 +86,8 @@ class TradeTracker(tk.Tk):
             for iid in iids:
                 row = self.treeview.set(iid)
                 if row:
-                    data = {k: v for k, v in row.items() if v != ""}
+                    # need to fix this dictionary. Contain columns not in header
+                    data = {k: v for k, v in row.items() if k in header}
                     writer.writerow(data)
 
     def autosave(self):
@@ -98,7 +99,8 @@ class TradeTracker(tk.Tk):
         """Export to a CSV file."""
         file_path = tk.filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")])
 
-        self.write_csv_file(file_path)
+        if file_path:
+            self.write_csv_file(file_path)
 
     def import_csv_file(self):
         """Import from a CSV file."""
@@ -120,16 +122,45 @@ class TradeTracker(tk.Tk):
                         for col_name, value in row.items():
                             self.treeview.set(item=new_item, column=col_name, value=value)
 
+                self.perform_calculations()
                 self.status_label.config(text=f"CSV file loaded: {file_path}")
 
             except Exception as e:
                 self.status_label.config(text=f"Error: {e}")
 
+
     def perform_calculations(self):
         """Perform all calculations for Treeview."""
-        items = self.treeview.get_children()
-        print(items)
+        iids = self.treeview.get_children()
 
+        upper_row_iid = None
+
+        open_date_temp = ""
+        ticker_temp = ""
+        long_short_temp = ""
+
+        total_cost = None
+        total_shares = None
+
+        for iid in iids:
+            row = self.treeview.set(iid)
+            if row:
+                if (open_date_temp == row["open_date"]) and (ticker_temp == row["ticker"]) and (long_short_temp == row["long_short"]):
+                    total_cost += float(row["net_cost"])
+                    total_shares += float(row["open_shares"])
+                    continue
+                else:
+                    upper_row_iid = iid
+
+                    open_date_temp = row["open_date"]
+                    ticker_temp = row["ticker"]
+                    long_short_temp = row["long_short"]
+
+                    total_cost = float(row["net_cost"])
+                    total_shares = float(row["open_shares"])
+            else:
+                self.treeview.set(item=upper_row_iid, column="total_cost", value=total_cost)
+                self.treeview.set(item=upper_row_iid, column="cost_basis", value=round(total_cost/total_shares, 2))
 
 
 if __name__ == "__main__":
