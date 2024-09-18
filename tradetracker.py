@@ -134,68 +134,53 @@ class TradeTracker(tk.Tk):
 
     def perform_all_calculations(self):
         """Perform all calculations for Treeview."""
+
+        def calculate_and_set_values(iid, total_cost, total_shares, total_net_proceeds):
+            """Helper method to calculate and set total cost, cost basis, and profit/loss."""
+            total_cost = round(total_cost, 2)
+            cost_basis = round(total_cost / total_shares, 2)
+            profit_loss = round(total_net_proceeds - total_cost, 2)
+
+            self.treeview.set(item=iid, column="total_cost", value=total_cost)
+            self.treeview.set(item=iid, column="cost_basis", value=cost_basis)
+            self.treeview.set(item=iid, column="profit_loss", value=profit_loss)
+
         iids = self.treeview.get_children()
 
+        # Temporary variables to track ongoing trade
         upper_row_iid = None
-
-        open_date_temp = ""
-        ticker_temp = ""
-        long_short_temp = ""
-
-        total_cost = None
-        total_shares = None
-        total_net_proceeds = None
+        open_date_temp = ticker_temp = long_short_temp = ""
+        total_cost = total_shares = total_net_proceeds = None
 
         for iid in iids:
             row = self.treeview.set(iid)
 
-            # If row is not empty
+            # If the row is not empty
             if row:
-                open_date = row["open_date"]
-                ticker = row["ticker"]
-                long_short = row["long_short"]
-                open_shares = row["open_shares"]
-                net_cost = row["net_cost"]
-                net_proceeds = row["net_proceeds"]
+                open_date, ticker, long_short = row["open_date"], row["ticker"], row["long_short"]
+                open_shares, net_cost = float(row["open_shares"]), float(row["net_cost"])
+                net_proceeds = float(row["net_proceeds"]) if row["net_proceeds"] else 0
 
-                # If same trade
+                # If continuing the same trade (multiple entries/transactions)
                 if (open_date_temp == open_date) and (ticker_temp == ticker) and (long_short_temp == long_short):
-                    total_cost += float(net_cost)
-                    total_shares += float(open_shares)
-                    if net_proceeds:
-                        total_net_proceeds += float(net_proceeds)
-                # Else if new trade
+                    total_cost += net_cost
+                    total_shares += open_shares
+                    total_net_proceeds += net_proceeds
+
+                # For a new trade
                 else:
-                    # Perform calculations for previous trade excluding the very first trade.
-                    if (total_cost != None) and (total_shares != None) and (total_net_proceeds != None):
-                        total_cost = round(total_cost, 2)
-                        cost_basis = round(total_cost/total_shares, 2)
-                        profit_loss = round(total_net_proceeds - total_cost, 2)
+                    # Calculate the previous trade's values if any (all trades except the very first one)
+                    if total_cost is not None:
+                        calculate_and_set_values(upper_row_iid, total_cost, total_shares, total_net_proceeds)
 
-                        self.treeview.set(item=upper_row_iid, column="total_cost", value=total_cost)
-                        self.treeview.set(item=upper_row_iid, column="cost_basis", value=cost_basis)
-                        self.treeview.set(item=upper_row_iid, column="profit_loss", value=profit_loss)
-
-                    # Update temp variables for the new trade.
+                    # Update temp variables for the new trade
                     upper_row_iid = iid
+                    open_date_temp, ticker_temp, long_short_temp = open_date, ticker, long_short
+                    total_cost, total_shares, total_net_proceeds = net_cost, open_shares, net_proceeds
 
-                    open_date_temp = open_date
-                    ticker_temp = ticker
-                    long_short_temp = long_short
-
-                    total_cost = float(net_cost)
-                    total_shares = float(open_shares)
-                    if net_proceeds:
-                        total_net_proceeds = float(net_proceeds)
-
+            # Empty row encountered; process the previous trade's calculations.
             else:
-                total_cost = round(total_cost, 2)
-                cost_basis = round(total_cost/total_shares, 2)
-                profit_loss = round(total_net_proceeds - total_cost, 2)
-
-                self.treeview.set(item=upper_row_iid, column="total_cost", value=total_cost)
-                self.treeview.set(item=upper_row_iid, column="cost_basis", value=cost_basis)
-                self.treeview.set(item=upper_row_iid, column="profit_loss", value=profit_loss)
+                calculate_and_set_values(upper_row_iid, total_cost, total_shares, total_net_proceeds)
 
 
 if __name__ == "__main__":
