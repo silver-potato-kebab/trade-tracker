@@ -140,10 +140,12 @@ class TradeTracker(tk.Tk):
             total_cost = round(total_cost, 2)
             cost_basis = round(total_cost / total_shares, 2)
             profit_loss = round(total_net_proceeds - total_cost, 2)
+            net_percentage = round(profit_loss/total_cost*100, 2)
 
             self.treeview.set(item=iid, column="total_cost", value=total_cost)
             self.treeview.set(item=iid, column="cost_basis", value=cost_basis)
             self.treeview.set(item=iid, column="profit_loss", value=profit_loss)
+            self.treeview.set(item=iid, column="net_percentage", value=net_percentage)
 
         iids = self.treeview.get_children()
 
