@@ -1,3 +1,5 @@
+import traceback
+
 import csv
 import os.path
 import tkinter as tk
@@ -122,14 +124,15 @@ class TradeTracker(tk.Tk):
                         for col_name, value in row.items():
                             self.treeview.set(item=new_item, column=col_name, value=value)
 
-                self.perform_calculations()
+                self.perform_all_calculations()
                 self.status_label.config(text=f"CSV file loaded: {file_path}")
 
             except Exception as e:
                 self.status_label.config(text=f"Error: {e}")
+                print(traceback.format_exc())
 
 
-    def perform_calculations(self):
+    def perform_all_calculations(self):
         """Perform all calculations for Treeview."""
         iids = self.treeview.get_children()
 
@@ -141,26 +144,58 @@ class TradeTracker(tk.Tk):
 
         total_cost = None
         total_shares = None
+        total_net_proceeds = None
 
         for iid in iids:
             row = self.treeview.set(iid)
+
+            # If row is not empty
             if row:
-                if (open_date_temp == row["open_date"]) and (ticker_temp == row["ticker"]) and (long_short_temp == row["long_short"]):
-                    total_cost += float(row["net_cost"])
-                    total_shares += float(row["open_shares"])
-                    continue
+                open_date = row["open_date"]
+                ticker = row["ticker"]
+                long_short = row["long_short"]
+                open_shares = row["open_shares"]
+                net_cost = row["net_cost"]
+                net_proceeds = row["net_proceeds"]
+
+                # If same trade
+                if (open_date_temp == open_date) and (ticker_temp == ticker) and (long_short_temp == long_short):
+                    total_cost += float(net_cost)
+                    total_shares += float(open_shares)
+                    if net_proceeds:
+                        total_net_proceeds += float(net_proceeds)
+                # Else if new trade
                 else:
+                    # Perform calculations for previous trade excluding the very first trade.
+                    if (total_cost != None) and (total_shares != None) and (total_net_proceeds != None):
+                        total_cost = round(total_cost, 2)
+                        cost_basis = round(total_cost/total_shares, 2)
+                        profit_loss = round(total_net_proceeds - total_cost, 2)
+
+                        self.treeview.set(item=upper_row_iid, column="total_cost", value=total_cost)
+                        self.treeview.set(item=upper_row_iid, column="cost_basis", value=cost_basis)
+                        self.treeview.set(item=upper_row_iid, column="profit_loss", value=profit_loss)
+
+                    # Update temp variables for the new trade.
                     upper_row_iid = iid
 
-                    open_date_temp = row["open_date"]
-                    ticker_temp = row["ticker"]
-                    long_short_temp = row["long_short"]
+                    open_date_temp = open_date
+                    ticker_temp = ticker
+                    long_short_temp = long_short
 
-                    total_cost = float(row["net_cost"])
-                    total_shares = float(row["open_shares"])
+                    total_cost = float(net_cost)
+                    total_shares = float(open_shares)
+                    if net_proceeds:
+                        total_net_proceeds = float(net_proceeds)
+
             else:
+                total_cost = round(total_cost, 2)
+                cost_basis = round(total_cost/total_shares, 2)
+                profit_loss = round(total_net_proceeds - total_cost, 2)
+
                 self.treeview.set(item=upper_row_iid, column="total_cost", value=total_cost)
-                self.treeview.set(item=upper_row_iid, column="cost_basis", value=round(total_cost/total_shares, 2))
+                self.treeview.set(item=upper_row_iid, column="cost_basis", value=cost_basis)
+                self.treeview.set(item=upper_row_iid, column="profit_loss", value=profit_loss)
 
 
 if __name__ == "__main__":
