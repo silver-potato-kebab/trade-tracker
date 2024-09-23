@@ -17,7 +17,7 @@ class TradeTracker(tk.Tk):
         super().__init__()
 
         self.title(name)
-        self.main_frame = ttk.Frame(master=self)
+        self.main_frame = ttk.Frame(master=self, name="main_frame")
 
         self.build_ui(master=self.main_frame)
 
@@ -26,16 +26,19 @@ class TradeTracker(tk.Tk):
     def build_ui(self, master):
         """Create the graphical user interface on a master widget."""
         buttons_frame = ttk.Frame(master=master)
+        order_entry_frame = ttk.LabelFrame(master=master, name="order_entry_frame", text="Order Entry")
         treeview_frame = ttk.Frame(master=master)
         status_frame = ttk.Frame(master=master)
 
         self.build_buttons(master=buttons_frame)
+        self.build_order_entry(master=order_entry_frame)
         self.build_treeview(master=treeview_frame)
         self.build_status_label(master=status_frame)
 
         buttons_frame.pack(anchor="w", pady=(0,20))
-        treeview_frame.pack()
-        status_frame.pack(pady=(20,0))
+        order_entry_frame.pack(anchor="w", pady=(0,20))
+        treeview_frame.pack(pady=(0,20))
+        status_frame.pack()
 
     def build_buttons(self, master):
         """Create buttons for the interface."""
@@ -45,6 +48,35 @@ class TradeTracker(tk.Tk):
         export_btn = ttk.Button(master=master, command=self.export_csv_file, text="Export")
         export_btn.pack(padx=(10, 0), side=tk.LEFT)
 
+    def build_order_entry(self, master):
+        """Create order entry form."""
+        entry_inner_frame = ttk.Frame(master=master, name="entry_inner_frame")
+
+        entry_labels = ("Date", "Ticker", "Long/Short", "Shares", "Price", "Cost")
+
+        special_cases = {
+            "Date": lambda frame, col, label_text: DateEntry(master=frame, name=label_text, width=12).grid(row=1, column=col, padx=1),
+            "Long/Short": lambda frame, col, label_text: ttk.Combobox(frame, values=["Long", "Short"], name=label_text, width=12).grid(row=1, column=col, padx=1),
+            "Cost": lambda frame, col, label_text: ttk.Entry(master=frame, name=label_text, width=12, state="disabled").grid(row=1, column=col, padx=1)
+        }
+
+        for col, label_text in enumerate(entry_labels):
+            # Create the label
+            label =  ttk.Label(master=entry_inner_frame, text=label_text)
+            label.grid(row=0, column=col, pady=(0,10))
+
+            # Create entry or special widget
+            if label_text in special_cases:
+                special_cases[label_text](entry_inner_frame, col, self.lowercase_ignore_special(label_text))
+            else:
+                ttk.Entry(master=entry_inner_frame, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
+
+        entry_inner_frame.pack(padx=10, pady=10, side=tk.LEFT)
+
+        # Add button
+        button = ttk.Button(master=entry_inner_frame, text="Add", command=self.add_entry)
+        button.grid(row=1, column=99, padx=(10,0))
+
     def build_treeview(self, master):
         """Create the custom treeview widget."""
         column_names = {
@@ -53,13 +85,13 @@ class TradeTracker(tk.Tk):
             "long_short": "Long/Short",
             "open_shares": "Shares",
             "open_price": "Price",
-            "net_cost": "Net Cost",
+            "cost": "Cost",
             "total_cost": "Total Cost",
             "cost_basis": "Cost Basis",
             "close_date": "Exit Date",
             "close_shares": "Shares",
             "close_price": "Price",
-            "net_proceeds": "Net Proceeds",
+            "proceeds": "Proceeds",
             "profit_loss": "Profit/Loss",
             "net_percentage": "Net %"}
 
@@ -76,9 +108,13 @@ class TradeTracker(tk.Tk):
         self.status_label = ttk.Label(master=master, text="")
         self.status_label.pack()
 
+    def lowercase_ignore_special(self, text):
+        """Find all alphabetic characters and convert only them to lowercase"""
+        return ''.join(char.lower() if char.isalpha() else char for char in text)
+
     def write_csv_file(self, path):
         """Write treeview data  to CSV file."""
-        header = ("open_date","ticker", "long_short", "open_shares", "open_price", "net_cost", "close_date", "close_shares", "close_price", "net_proceeds")
+        header = ("open_date","ticker", "long_short", "open_shares", "open_price", "cost", "close_date", "close_shares", "close_price", "proceeds")
 
         with open(path, "w") as file:
             writer = csv.DictWriter(file, fieldnames=header)
@@ -103,6 +139,25 @@ class TradeTracker(tk.Tk):
 
         if file_path:
             self.write_csv_file(file_path)
+
+    def add_entry(self):
+        """Add entry values to treeview and export to current CSV file."""
+        entry_inner_frame = self.nametowidget(".main_frame.order_entry_frame.entry_inner_frame")
+
+        data = {
+            "open_date": entry_inner_frame.nametowidget("!dateentry").get_date(),
+            "ticker": entry_inner_frame.nametowidget("ticker").get(),
+            "long_short": entry_inner_frame.nametowidget("long/short").get(),
+            "open_shares": entry_inner_frame.nametowidget("shares").get(),
+            "open_price": entry_inner_frame.nametowidget("price").get(),
+            "cost": entry_inner_frame.nametowidget("cost").get()
+        }
+
+        new_item = self.treeview.insert(parent="", index=0)
+        columns = ("open_date", "ticker", "long_short", "open_shares", "open_price", "cost")
+
+        for col, val in data.items():
+            self.treeview.set(item=new_item, column=col, value=val)
 
     def import_csv_file(self):
         """Import from a CSV file."""
@@ -160,8 +215,8 @@ class TradeTracker(tk.Tk):
             # If the row is not empty
             if row:
                 open_date, ticker, long_short = row["open_date"], row["ticker"], row["long_short"]
-                open_shares, net_cost = float(row["open_shares"]), float(row["net_cost"])
-                net_proceeds = float(row["net_proceeds"]) if row["net_proceeds"] else 0
+                open_shares, net_cost = float(row["open_shares"]), float(row["cost"])
+                net_proceeds = float(row["proceeds"]) if row["proceeds"] else 0
 
                 # If continuing the same trade (multiple entries/transactions)
                 if (open_date_temp == open_date) and (ticker_temp == ticker) and (long_short_temp == long_short):
