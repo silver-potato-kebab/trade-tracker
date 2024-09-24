@@ -54,20 +54,32 @@ class TradeTracker(tk.Tk):
         def update_cost_entry(var, index, mode):
             """Update Cost entry widget."""
             cost_entry_widget = self.nametowidget(".main_frame.order_entry_frame.entry_inner_frame.cost")
-            cost = shares_intvar.get() * price_doublevar.get()
+            try:
+                shares = shares_intvar.get()
+                price = price_doublevar.get()
+                cost = shares * price if shares >=0 and price >= 0 else 0
+            except tk.TclError:
+                cost = 0
+
             cost_entry_widget.config(state="normal")
             cost_entry_widget.delete(0, tk.END)
-            cost_entry_widget.insert(0, cost)
+            cost_entry_widget.insert(0, f"{cost:.2f}")
             cost_entry_widget.config(state="readonly")
 
         entry_inner_frame = ttk.Frame(master=master, name="entry_inner_frame")
 
         entry_labels = ("Date", "Ticker", "Long/Short", "Shares", "Price", "Cost")
 
+        shares_intvar = tk.IntVar()
+        price_doublevar = tk.DoubleVar()
+
+        shares_intvar.trace_add("write", update_cost_entry)
+        price_doublevar.trace_add("write", update_cost_entry)
+
         special_cases = {
             "Date": lambda frame, col, label_text: DateEntry(master=frame, name=label_text, width=12).grid(row=1, column=col, padx=1),
             "Long/Short": lambda frame, col, label_text: ttk.Combobox(frame, values=["Long", "Short"], name=label_text, width=12).grid(row=1, column=col, padx=1),
-            "Cost": lambda frame, col, label_text: ttk.Entry(master=frame, name=label_text, width=12, state="readonly").grid(row=1, column=col, padx=1)
+            "Cost": lambda frame, col, label_text: ttk.Entry(master=frame, name=label_text, state="readonly", width=12).grid(row=1, column=col, padx=1),
         }
 
         for col, label_text in enumerate(entry_labels):
@@ -78,13 +90,9 @@ class TradeTracker(tk.Tk):
             # Create entry or special widget
             if label_text in special_cases:
                 special_cases[label_text](entry_inner_frame, col, self.lowercase_ignore_special(label_text))
-            elif label_text == "Shares":
-                shares_intvar  = tk.IntVar()
-                shares_intvar.trace_add("write", update_cost_entry)
+            elif label_text == "Shares": # Integer only Entry widget
                 ttk.Entry(master=entry_inner_frame, textvariable=shares_intvar, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
-            elif label_text == "Price":
-                price_doublevar = tk.DoubleVar()
-                price_doublevar.trace_add("write", update_cost_entry)
+            elif label_text == "Price": # Float only Entry widget
                 ttk.Entry(master=entry_inner_frame, textvariable=price_doublevar, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
             else:
                 ttk.Entry(master=entry_inner_frame, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
@@ -93,7 +101,7 @@ class TradeTracker(tk.Tk):
 
         # 'Add' button
         button = ttk.Button(master=entry_inner_frame, text="Add", command=self.add_entry)
-        button.grid(row=1, column=99, padx=(10,0))
+        button.grid(row=1, column=len(entry_labels), padx=(10,0))
 
     def build_treeview(self, master):
         """Create the custom treeview widget."""
