@@ -9,10 +9,13 @@ class ValidatedEntry(ttk.Entry):
         """
         Initialize Entry constructor with specified validation.
 
-        validation_type (str):
-        integer
-        price
-        alpha
+        Parameters:
+        master: The Parent widget.
+        validation_type:
+            integer
+            price
+            alpha
+        **kwargs: Additional keyword arguments passed to the ttk.Entry constructor.
         """
         super().__init__(master, **kwargs)
 
@@ -46,18 +49,22 @@ class ValidatedEntry(ttk.Entry):
 
     def validate_price(self, value: str) -> bool:
         """Return True if value is valid price."""
-        return value.is
+        try:
+            price = float(value)
+            return price >= 0.0
+        except ValueError:
+            return False
 
     def validate_alpha(self, value: str) -> bool:
         """Return True if value is an alphabet character."""
-        pass
+        return value.isalpha()
 
 
 if __name__ == "__main__":
 
     root = tk.Tk()
 
-    v_entry = ValidatedEntry(validation_type="integer")
+    v_entry = ValidatedEntry(validation_type="price")
     v_entry.pack()
 
     root.mainloop()
