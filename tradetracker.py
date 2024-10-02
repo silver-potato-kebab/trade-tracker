@@ -60,12 +60,15 @@ class TradeTracker(tk.Tk):
                 price = price_doublevar.get()
                 cost = shares * price if shares >=0 and price >= 0 else 0
             except tk.TclError:
-                cost = 0
-
-            cost_entry_widget.config(state="normal")
-            cost_entry_widget.delete(0, tk.END)
-            cost_entry_widget.insert(0, f"{cost:.2f}")
-            cost_entry_widget.config(state="readonly")
+                cost_entry_widget.config(state="normal")
+                cost_entry_widget.delete(0, tk.END)
+                cost_entry_widget.insert(0, f"")
+                cost_entry_widget.config(state="readonly")
+            else:
+                cost_entry_widget.config(state="normal")
+                cost_entry_widget.delete(0, tk.END)
+                cost_entry_widget.insert(0, f"{cost:.2f}")
+                cost_entry_widget.config(state="readonly")
 
         def check_entries(var, index, mode):
             """Check if all entry fields are not empty"""
