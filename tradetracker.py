@@ -8,6 +8,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
 from edit_treeview import EditTreeview
+from validated_entry import ValidatedEntry
 
 
 class TradeTracker(tk.Tk):
@@ -66,19 +67,43 @@ class TradeTracker(tk.Tk):
             cost_entry_widget.insert(0, f"{cost:.2f}")
             cost_entry_widget.config(state="readonly")
 
+        def check_entries(var, index, mode):
+            """Check if all entry fields are not empty"""
+            try:
+                shares = shares_intvar.get()
+            except tk.TclError:
+                shares = ""
+
+            try:
+                price = price_doublevar.get()
+            except tk.TclError:
+                price = ""
+
+            if ticker_var.get() and long_short_var.get() and shares and price:
+                add_button.config(state="normal")
+            else:
+                add_button.config(state="disabled")
+
         entry_inner_frame = ttk.Frame(master=master, name="entry_inner_frame")
 
         entry_labels = ("Date", "Ticker", "Long/Short", "Shares", "Price", "Cost")
 
+        ticker_var = tk.StringVar()
+        long_short_var =  tk.StringVar()
         shares_intvar = tk.IntVar()
         price_doublevar = tk.DoubleVar()
+
+        ticker_var.trace_add("write", check_entries)
+        long_short_var.trace_add("write", check_entries)
+        shares_intvar.trace_add("write", check_entries)
+        price_doublevar.trace_add("write", check_entries)
 
         shares_intvar.trace_add("write", update_cost_entry)
         price_doublevar.trace_add("write", update_cost_entry)
 
         special_cases = {
             "Date": lambda frame, col, label_text: DateEntry(master=frame, name=label_text, width=12).grid(row=1, column=col, padx=1),
-            "Long/Short": lambda frame, col, label_text: ttk.Combobox(frame, values=["Long", "Short"], name=label_text, width=12).grid(row=1, column=col, padx=1),
+            "Long/Short": lambda frame, col, label_text: ttk.Combobox(frame, values=["Long", "Short"], textvariable=long_short_var, name=label_text, width=12).grid(row=1, column=col, padx=1),
             "Cost": lambda frame, col, label_text: ttk.Entry(master=frame, name=label_text, state="readonly", width=12).grid(row=1, column=col, padx=1),
         }
 
@@ -91,17 +116,17 @@ class TradeTracker(tk.Tk):
             if label_text in special_cases:
                 special_cases[label_text](entry_inner_frame, col, self.lowercase_ignore_special(label_text))
             elif label_text == "Shares": # Integer only Entry widget
-                ttk.Entry(master=entry_inner_frame, textvariable=shares_intvar, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
+                ValidatedEntry(master=entry_inner_frame, validation_type="integer", textvariable=shares_intvar, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
             elif label_text == "Price": # Float only Entry widget
-                ttk.Entry(master=entry_inner_frame, textvariable=price_doublevar, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
-            else:
-                ttk.Entry(master=entry_inner_frame, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
+                ValidatedEntry(master=entry_inner_frame, validation_type="price", textvariable=price_doublevar, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
+            elif label_text == "Ticker": # String only Entrry widget
+                ValidatedEntry(master=entry_inner_frame, validation_type="alpha", textvariable=ticker_var, name=self.lowercase_ignore_special(label_text), width=12).grid(row=1, column=col, padx=1)
 
         entry_inner_frame.pack(padx=10, pady=10, side=tk.LEFT)
 
         # 'Add' button
-        button = ttk.Button(master=entry_inner_frame, text="Add", command=self.add_entry)
-        button.grid(row=1, column=len(entry_labels), padx=(10,0))
+        add_button = ttk.Button(master=entry_inner_frame, text="Add", state="disabled", command=self.add_entry)
+        add_button.grid(row=1, column=len(entry_labels), padx=(10,0))
 
     def build_treeview(self, master):
         """Create the custom treeview widget."""
