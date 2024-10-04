@@ -53,7 +53,7 @@ class TradeTracker(tk.Tk):
         """Create order entry form."""
 
         def update_cost_entry(var, index, mode):
-            """Update Cost entry widget."""
+            """Update Cost entry widget based on shares and price."""
             cost_entry_widget = self.nametowidget(".main_frame.order_entry_frame.entry_inner_frame.cost")
             try:
                 shares = shares_intvar.get()
@@ -62,7 +62,7 @@ class TradeTracker(tk.Tk):
             except tk.TclError:
                 cost_entry_widget.config(state="normal")
                 cost_entry_widget.delete(0, tk.END)
-                cost_entry_widget.insert(0, f"")
+                cost_entry_widget.insert(0, "")
                 cost_entry_widget.config(state="readonly")
             else:
                 cost_entry_widget.config(state="normal")
@@ -71,7 +71,7 @@ class TradeTracker(tk.Tk):
                 cost_entry_widget.config(state="readonly")
 
         def check_entries(var, index, mode):
-            """Check if all entry fields are not empty"""
+            """Enable 'Add' button if all fields are filled."""
             try:
                 shares = shares_intvar.get()
             except tk.TclError:
@@ -87,8 +87,10 @@ class TradeTracker(tk.Tk):
             else:
                 add_button.config(state="disabled")
 
+        # Frame for the entry widgets
         entry_inner_frame = ttk.Frame(master=master, name="entry_inner_frame")
 
+        # Entry labels and variables
         entry_labels = ("Date", "Ticker", "Long/Short", "Shares", "Price", "Cost")
 
         ticker_var = tk.StringVar()
@@ -96,6 +98,7 @@ class TradeTracker(tk.Tk):
         shares_intvar = tk.IntVar()
         price_doublevar = tk.DoubleVar()
 
+        # Traces to check entries and update cost
         ticker_var.trace_add("write", check_entries)
         long_short_var.trace_add("write", check_entries)
         shares_intvar.trace_add("write", check_entries)
@@ -104,18 +107,17 @@ class TradeTracker(tk.Tk):
         shares_intvar.trace_add("write", update_cost_entry)
         price_doublevar.trace_add("write", update_cost_entry)
 
+        # Special cases for non-standard entry widgets
         special_cases = {
             "Date": lambda frame, col, label_text: DateEntry(master=frame, name=label_text, width=12).grid(row=1, column=col, padx=1),
             "Long/Short": lambda frame, col, label_text: ttk.Combobox(frame, values=["Long", "Short"], textvariable=long_short_var, name=label_text, width=12).grid(row=1, column=col, padx=1),
             "Cost": lambda frame, col, label_text: ttk.Entry(master=frame, name=label_text, state="readonly", width=12).grid(row=1, column=col, padx=1),
         }
 
+        # Loop to create labels and entry widgets
         for col, label_text in enumerate(entry_labels):
-            # Create the label
-            label =  ttk.Label(master=entry_inner_frame, text=label_text)
-            label.grid(row=0, column=col, pady=(0,10))
+            ttk.Label(master=entry_inner_frame, text=label_text).grid(row=0, column=col, pady=(0,10))
 
-            # Create entry or special widget
             if label_text in special_cases:
                 special_cases[label_text](entry_inner_frame, col, self.lowercase_ignore_special(label_text))
             elif label_text == "Shares": # Integer only Entry widget
