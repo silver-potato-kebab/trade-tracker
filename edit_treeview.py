@@ -27,9 +27,7 @@ class EditTreeview(ttk.Treeview):
 
         # Get column that was double clicked: #0, #1, #2, etc.
         column = self.identify_column(x=event.x)
-
-        # "#0" -> -1, "#1" -> 0, "#2" -> 1, etc.
-        column_index = int(column[1:]) - 1
+        column_index = int(column[1:]) - 1 # "#0" -> -1, "#1" -> 0, "#2" -> 1, etc.
 
         # Get iid of the item selected (row identifier). For example: "I001", "I002", etc.
         selected_iid = self.focus()
@@ -37,16 +35,21 @@ class EditTreeview(ttk.Treeview):
         # Get dictionary containing both text (for a tree) and value (for a cell) from the given item iid.
         selected_values = self.item(selected_iid)
 
-        if column == "#0": # if tree
+        if column == "#0": # if tree is selected
             selected_text = selected_values.get("text")
-        else: # else cell
-            selected_text = selected_values.get("values")[column_index]
+        else: # else cell is selected
+            values = selected_values.get("values")
+
+            # Check if the column index is within the valid range of available columns
+            if column_index >= len(values):
+                return # Column index out of range, do nothing
+
+            selected_text = values[column_index]
 
         # Get the coordinate and dimension of tree or cell -> (x, y, w, h)
         column_box = self.bbox(item=selected_iid, column=column)
 
         entry_edit = ttk.Entry()
-
         # Keep track of column_index and selected_iid inside the ttk.Entry object for event reference.
         entry_edit.editing_column_index = column_index
         entry_edit.editing_item_iid = selected_iid
@@ -59,8 +62,11 @@ class EditTreeview(ttk.Treeview):
         entry_edit.bind("<Return>", self.on_enter_pressed)
 
         # Offset any padding by factoring in the difference between the widget's and toplevel's (x, y) coordinates.
-        entry_edit.place(x=column_box[0]+(self.winfo_rootx()-self.winfo_toplevel().winfo_rootx()),
-                         y=column_box[1]+(self.winfo_rooty()-self.winfo_toplevel().winfo_rooty()),
+        tree_x_offset = self.winfo_rootx() - self.winfo_toplevel().winfo_rootx()
+        tree_y_offset = self.winfo_rooty() - self.winfo_toplevel().winfo_rooty()
+
+        entry_edit.place(x=column_box[0]+tree_x_offset,
+                         y=column_box[1]+tree_y_offset,
                          w=column_box[2],
                          h=column_box[3])
 
