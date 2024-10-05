@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
+from typing import Callable
 from validated_entry import ValidatedEntry
 
 
 class EditTreeview(ttk.Treeview):
     """Editable ttk Treeview widget that displays a hierarchical collection of items."""
 
-    def __init__(self, master, column_validation: dict[str, str]=None, **kw):
+    def __init__(self, master, column_validation: dict[str, str]=None, callback: Callable[[], None]=None, **kw):
         """Initialize the EditTreeview with the parent master and optional keyword arguments.
 
         Parameters:
@@ -17,6 +18,7 @@ class EditTreeview(ttk.Treeview):
         super().__init__(master, **kw)
 
         self.column_validation = column_validation
+        self.callback = callback
 
         self.bind("<Double-1>", self.on_double_click)
 
@@ -116,6 +118,8 @@ class EditTreeview(ttk.Treeview):
             self.item(selected_iid, values=current_values)
 
         event.widget.destroy()
+
+        self.callback() if self.callback else None
 
     def format_price(self, value: str) -> str:
         """Helper function to format price or signed price fields."""
