@@ -55,8 +55,9 @@ class EditTreeview(ttk.Treeview):
 
         if self.column_validation:
             column_name = self.column(column)["id"]
-            validation_type = self.column_validation[column_name]
-            entry_edit=ValidatedEntry(validation_type=validation_type)
+            validation_type = self.column_validation.get(column_name, None)
+            entry_edit=ValidatedEntry(validation_type=validation_type) if validation_type else ttk.Entry()
+
             # Keep track of validation type for event reference
             entry_edit.validation_type = validation_type
         else:
@@ -97,10 +98,12 @@ class EditTreeview(ttk.Treeview):
 
         # Handle validation and formatting based on column validation
         if self.column_validation:
-            validation_type = event.widget.validation_type
-
-            if validation_type in ("price", "signed_price"):
-                new_text = self.format_price(new_text)
+            try:
+                validation_type = event.widget.validation_type
+                if validation_type in ("price", "signed_price"):
+                    new_text = self.format_price(new_text)
+            except AttributeError:
+                pass # No validation type, do nothing
 
         column_index = event.widget.editing_column_index # Get the column index
 
