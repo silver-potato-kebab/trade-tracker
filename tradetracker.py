@@ -164,7 +164,7 @@ class TradeTracker(tk.Tk):
             "proceeds": "price",
             "profit_loss": "signed_price"}
 
-        self.treeview = EditTreeview(master=master, columns=list(column_names.keys()), column_validation=column_validation, show="headings")
+        self.treeview = EditTreeview(master=master, columns=list(column_names.keys()), column_validation=column_validation, callback=self.update_treeview_callback, show="headings")
 
         for col_name, col_text in column_names.items():
             self.treeview.heading(column=col_name, text=col_text)
@@ -176,6 +176,10 @@ class TradeTracker(tk.Tk):
         """Create a status label for the interface."""
         self.status_label = ttk.Label(master=master, text="")
         self.status_label.pack()
+
+    def update_treeview_callback(self):
+        """Callback function for Treeview on enter pressed."""
+        print("Enter pressed.")
 
     def lowercase_ignore_special(self, text):
         """Find all alphabetic characters and convert only them to lowercase"""
