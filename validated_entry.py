@@ -34,7 +34,8 @@ class ValidatedEntry(ttk.Entry):
 
         elif self.validation_type == "price":
             return self.validate_price(input)
-
+        elif self.validation_type == "signed_price":
+            return self.validate_signed_price(input)
         elif self.validation_type == "alpha":
             return self.validate_alpha(input)
 
@@ -52,6 +53,17 @@ class ValidatedEntry(ttk.Entry):
         try:
             price = float(value)
             return price >= 0.0
+        except ValueError:
+            return False
+
+    def validate_signed_price(self, value: str) -> bool:
+        """Return True if value is a valid signed price."""
+        if value in ("-", ".", "-.", ""): # Allow incomplete values during typing
+            return True
+
+        try:
+            float(value)
+            return True
         except ValueError:
             return False
 

@@ -151,7 +151,20 @@ class TradeTracker(tk.Tk):
             "profit_loss": "Profit/Loss",
             "net_percentage": "Net %"}
 
-        self.treeview = EditTreeview(master=master, columns=list(column_names.keys()), show="headings")
+        column_validation = {
+            "ticker": "alpha",
+            "long_short": "alpha",
+            "open_shares": "integer",
+            "open_price": "price",
+            "cost": "price",
+            "total_cost": "price",
+            "cost_basis": "price",
+            "close_shares": "integer",
+            "close_price": "price",
+            "proceeds": "price",
+            "profit_loss": "signed_price"}
+
+        self.treeview = EditTreeview(master=master, columns=list(column_names.keys()), column_validation=column_validation, show="headings")
 
         for col_name, col_text in column_names.items():
             self.treeview.heading(column=col_name, text=col_text)

@@ -1,18 +1,22 @@
 import tkinter as tk
 from tkinter import ttk
+from validated_entry import ValidatedEntry
 
 
 class EditTreeview(ttk.Treeview):
     """Editable ttk Treeview widget that displays a hierarchical collection of items."""
 
-    def __init__(self, master, **kw):
+    def __init__(self, master, column_validation: dict[str, str]=None, **kw):
         """Initialize the EditTreeview with the parent master and optional keyword arguments.
 
         Parameters:
         master: The parent widget.
+        column_validation: {column_name: validation_type (integer, price, alpha)}
         **kw: Additional keyword arguments passed to the ttk.Treeview constructor.
         """
         super().__init__(master, **kw)
+
+        self.column_validation = column_validation
 
         self.bind("<Double-1>", self.on_double_click)
 
@@ -49,7 +53,15 @@ class EditTreeview(ttk.Treeview):
         # Get the coordinate and dimension of tree or cell -> (x, y, w, h)
         column_box = self.bbox(item=selected_iid, column=column)
 
-        entry_edit = ttk.Entry()
+        if self.column_validation:
+            column_name = self.column(column)["id"]
+            validation_type = self.column_validation[column_name]
+            entry_edit=ValidatedEntry(validation_type=validation_type)
+            # Keep track of validation type for event reference
+            entry_edit.validation_type = validation_type
+        else:
+            entry_edit = ttk.Entry()
+
         # Keep track of column_index and selected_iid inside the ttk.Entry object for event reference.
         entry_edit.editing_column_index = column_index
         entry_edit.editing_item_iid = selected_iid
@@ -78,22 +90,37 @@ class EditTreeview(ttk.Treeview):
     def on_enter_pressed(self, event):
         """Update text in cell when pressing enter."""
 
-        new_text = event.widget.get()
+        new_text = event.widget.get().strip()
 
-        # Such as I002
+        # Get item ID being edited, such as I002.
         selected_iid = event.widget.editing_item_iid
 
-        # Such as -1 (tree column), 0 (first self-defined column), etc.
-        column_index = event.widget.editing_column_index
+        # Handle validation and formatting based on column validation
+        if self.column_validation:
+            validation_type = event.widget.validation_type
 
-        if column_index == -1:
+            if validation_type in ("price", "signed_price"):
+                new_text = self.format_price(new_text)
+
+        column_index = event.widget.editing_column_index # Get the column index
+
+        # Update the Treeview item based on whether it's a tree column or a regular column
+        if column_index == -1: # If it's the tree column
             self.item(selected_iid, text=new_text)
-        else:
+        else: # If it's a regular column
             current_values = self.item(selected_iid).get("values")
             current_values[column_index] = new_text
             self.item(selected_iid, values=current_values)
 
         event.widget.destroy()
+
+    def format_price(self, value: str) -> str:
+        """Helper function to format price or signed price fields."""
+        try:
+            # Convert to float and ensure formatting to 2 decimal places
+            return f"{float(value) + 0:.2f}"
+        except ValueError:
+            return "0.00"  # Default to 0.00 on invalid input
 
 
 if __name__ == "__main__":
